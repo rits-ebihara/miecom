@@ -1,3 +1,12 @@
-'extends':
+extends:
+  - standard
   - 'next/core-web-vitals'
+  - plugin:storybook/recommended
+  - 'plugin:@typescript-eslint/recommended'
   - prettier
+rules:
+  '@typescript-eslint/no-unused-vars':
+    - error
+    - vars: all
+      argsIgnorePattern: '^_'
+      varsIgnorePattern: '^_'

@@ -1,8 +1,7 @@
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import { DeepReadonly } from '~/deepTypes';
-import { createAnswer } from './answerModel';
-import { User, userSchema } from './user';
+import { DeepReadonly } from '~/typeUtils';
+import { createUser, UserModel, userSchema } from '../user/userModel';
 
 const questionSchema = z.object({
   /** 質問の一意性を保証するID
@@ -14,9 +13,9 @@ const questionSchema = z.object({
   /** 質問の本文(markdown) */
   body: z.string().min(1).max(10000),
   /** 投稿日 */
-  postDate: z.date(),
+  postedDate: z.date(),
   /** 投稿者 */
-  postUser: userSchema,
+  postedUser: userSchema,
   /** 更新日 */
   update: z.date().nullable(),
   /** 解決状態 */
@@ -38,19 +37,19 @@ class QuestionImpl implements DeepReadonly<z.infer<typeof questionSchema>> {
   public readonly id: string;
   public readonly subject: string;
   public readonly body: string;
-  public readonly postDate: Date;
-  public readonly postUser: DeepReadonly<User>;
+  public readonly postedDate: Date;
+  public readonly postedUser: DeepReadonly<UserModel>;
   public readonly update: Date | null;
   public readonly isSolved: boolean;
 
   constructor(value: QuestionType) {
     const parsed = questionSchema.parse(value);
-    const postUser = new User(parsed.postUser);
+    const postUser = createUser(parsed.postedUser);
     this.id = parsed.id;
     this.subject = parsed.subject;
     this.body = parsed.body;
-    this.postDate = parsed.postDate;
-    this.postUser = postUser;
+    this.postedDate = parsed.postedDate;
+    this.postedUser = postUser;
     this.update = value.update;
     this.isSolved = value.isSolved;
   }
@@ -61,9 +60,14 @@ class QuestionImpl implements DeepReadonly<z.infer<typeof questionSchema>> {
    * @return 更新された新しいQuestion
    */
   updateSubject(subject: string) {
-    const parsed = questionSchema.shape.subject.parse(subject);
-    return new QuestionImpl({ ...this, subject: parsed, update: new Date() });
+    const parsedSubject = questionSchema.shape.subject.parse(subject);
+    return new QuestionImpl({
+      ...this,
+      subject: parsedSubject,
+      update: new Date(),
+    });
   }
+
   /**
    * 本文を更新する
    * @param body 本文
@@ -73,6 +77,7 @@ class QuestionImpl implements DeepReadonly<z.infer<typeof questionSchema>> {
     const parsed = questionSchema.shape.body.parse(body);
     return new QuestionImpl({ ...this, body: parsed, update: new Date() });
   }
+
   /**
    * 解決済みにする
    * @return 更新された新しいQuestion
@@ -82,7 +87,7 @@ class QuestionImpl implements DeepReadonly<z.infer<typeof questionSchema>> {
   }
 }
 
-export type Question = QuestionImpl;
+export type QuestionModel = QuestionImpl;
 
 /**
  * 新しいQuestionを作成する
@@ -90,12 +95,15 @@ export type Question = QuestionImpl;
  * @param postUser 投稿者
  * @return 新しいQuestion
  */
-export const createQuestion = (value: QuestionForInputType, postUser: User) => {
+export const createQuestion = (
+  value: QuestionForInputType,
+  postUser: UserModel,
+) => {
   return new QuestionImpl({
     ...value,
     id: nanoid(),
-    postDate: new Date(),
-    postUser: postUser,
+    postedDate: new Date(),
+    postedUser: postUser,
     isSolved: false,
     update: null,
   });

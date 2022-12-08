@@ -8,7 +8,7 @@ export const userSchema = accountSchema.pick({
   organization: true,
 });
 
-export class User implements z.infer<typeof userSchema> {
+class UserModelImpl implements z.infer<typeof userSchema> {
   public readonly id: string;
   public readonly name: string;
   public readonly email: string;
@@ -22,3 +22,16 @@ export class User implements z.infer<typeof userSchema> {
     this.organization = parsed.organization;
   }
 }
+
+export type UserModel = UserModelImpl;
+
+export const createUser = (value: z.infer<typeof userSchema>): UserModel => {
+  return new UserModelImpl(value);
+};
+
+export const getCurrentUser = async (): Promise<UserModel> => ({
+  id: 'u01234567890123456789',
+  email: 'u001@example.com',
+  name: 'ユーザー1',
+  organization: '組織1',
+});
