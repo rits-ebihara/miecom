@@ -1,0 +1,36 @@
+version: '3'
+services:
+  app:
+    image: 'node:16'
+    volumes:
+      - ./:/workspace
+    ports:
+      - 3000:3000
+    command: 'bash -c "while :; do sleep 10; done"'
+  mongo:
+    image: 'mongo:latest'
+    volumes:
+      - db:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+  mongo-express:
+    image: 'mongo-express:latest'
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+    # command: bash -c "sleep 10 && apk -U add --no-cache \
+    #          bash=5.1.16-r2 \
+    #          tini=0.19.0-r0 \
+    #          && yarn workspaces focus --production"
+volumes:
+  db: {}
+networks:
+  default:
+    driver_opts:
+      com.docker.network.driver.mtu: 1300
